@@ -1,0 +1,29 @@
+#Ignore .DS_Store
+.DS_Store
+
+#Ignore pdf
+*.pdf
+
+#Ignore Log
+*.log
+
+#Ignore aux files
+*.aux
+
+#Ignore .bak files
+*.bak
+
+#Ignore nav files
+*.nav
+
+#Ignore out files
+*.out
+
+#Ignore pyc files
+*.pyc
+
+#Ignore java class files.
+*.class
+
+*.bbg
+*.blg
