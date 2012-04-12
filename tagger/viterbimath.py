@@ -1,0 +1,137 @@
+# Viterbi Algorithm's Math/computation part
+# viterbimath.py
+
+"""
+Class:  ViterbiMath(observation_table, trans_matrix_bi, trans_matrix_tri, tags)
+
+The caller of this class should expect to call the function
+'get_next_column(...)' only. The rest of the functions are internally used.
+"""
+class ViterbiMath:
+    def __init__(self, observation_table, trans_matrix_bi, trans_matrix_tri, tags):
+        """
+        input
+            observation_table
+            trans_matrix_bi
+            trans_matrix_tri: pass along None if you want to use bigram_model only.
+            tags: a list of tags, e.g. ["NN" "VB"]
+        """
+        self.obsT = observation_table
+        self.transmBi = trans_matrix_bi
+        self.transmTri = trans_matrix_tri
+        self.tags = tags
+    
+    def get_next_column(self, dynamic_table, n, c, word):
+        """
+        Computes the probabilities of all the states'/tags' occurances for the
+        current word in the sentnece given using 'n'-gram model.
+        Currently, only bi- and tri- gram models are available.
+        ----
+        input
+            dynamic_table: the dynamic table that has been filled out so far
+                for the prediction.
+            n: either 2(bigram viterbi) or 3(trigram viterbi)
+            c: current column number, or the current location in the word
+                sequence, c>=0
+            word: current observation in the word sequence.
+        
+        returns a list containing the values for the next column of the
+            dynamic_table for the current observation word.
+        """
+        if n==2:
+            return self.do_bigram(dynamic_table, c, word)
+        elif n==3:
+            return self.do_trigram(dynamic_table, c, word)
+        else:
+            print "Wrong Input Value for n. Choose between 2 and 3."
+            return None
+
+    def do_bigram(self, dt, c, word):
+        """
+        Internally used within the class
+        Compute Viterbi Algorithm using a bigram model.
+        ----
+        input
+            dt: an instance of DynamicTable containing the probabilities of the previous states
+            c: non-negative integer of the current location in the word sequence
+            word: string of the current word in the word sequence
+
+        returns a list of probabilities of possible tag sequences for 'word', or the probabilities
+            to fill in the next column 'c' in the dynamic table 'dt'
+        """
+        if c==0:
+            return self.first_column(word)
+        
+        next_column = []
+        c_prev = c - 1
+
+        for tag_cur in self.tags:
+            max_prob = 0.0
+            obs_tag_prob = self.obsT[word + " " + tag_cur]
+
+            r = 0
+            for tag_prev in self.tags:
+                prev_prob = dt.prob(r, c_prev)
+                trans_prob = self.transmBi[tag_cur + " " + tag_prev]
+                prob = obs_tag_prob * trans_prob * prev_prob
+                max_prob = max(max_prob, prob)
+                r = r + 1
+
+            next_column.append(max_prob)
+                
+        return next_column
+
+    def do_trigram(self, dt, c, word):
+        """
+        Internally used within the class
+        Compute Biterbi Algorithm using a trigram model.
+        ----
+        input
+            dt: an instance of DynamicTable containing the probabilities of the previous states
+            c: non-negative integer of the current location in the word sequence
+            word: string of the current word in the word sequence
+
+        returns a list of probabilities of possible tag sequences for 'word', or the probabilities
+            to fill in the next column 'c' in the dynamic table 'dt'
+        """
+        if c<2:
+            return self.do_bigram(dt, c, word)
+
+        next_column = []
+        c_prev1 = c - 1
+        c_prev2 = c - 2
+
+        for tag_cur in self.tags:
+            max_prob = 0.0
+            obs_tag_prob = self.obsT[word + " " + tag_cur]
+
+            for tag_prev1 in self.tags:
+                r = 0
+                for tag_prev2 in self.tags:
+                    prev2_prob = dt.prob(r, c_prev2)
+                    trans2_prob = self.transmBi[tag_prev1 + " " + tag_prev2]
+                    trans3_prob = self.transmTri[tag_cur + " " + tag_prev2 + " " + tag_prev1]
+                    prob = obs_tag_prob * (0.5*trans2_prob + 0.5*trans3_prob) * prev2_prob
+                    max_prob = max(max_prob, prob)
+                    r = r + 1
+
+            next_column.append(max_prob)
+
+        return next_column
+
+    def first_column(self, word):
+        """
+        Internally used within the class.
+        Computes the probabilities of tagging the first word in the given word sequence.
+        ----
+        input
+            word: string of the first word of the word sequence
+
+        returns a list of probabilities of possible tags for 'word', or the probabilities to
+            fill in the first column of the dynamic table of the veterbi algorithm
+        """
+        next_column = []
+        for tag in self.tags:
+            next_column.append(self.obsT[word + " " + tag])
+        return next_column
+
