@@ -10,8 +10,8 @@ class VeterbiMathTest(unittest.TestCase):
         self._obsT = {"the NN": 0.1, "cat NN": 0.7, "is NN": 0.1, "pretty NN": 0.1,
             "the VB": 0.1, "cat VB": 0.1, "is VB": 0.7, "pretty VB": 0.1}
         self._transmBi = {"NN VB": 0.4, "NN NN": 0.1, "VB NN": 0.4, "VB VB": 0.1}
-        self._transmTri = {"NN NN NN": 0.05, "NN NN VB": 0.2, "NN VB NN": 0.3, "NN VB VB": 0.1,
-            "VB NN NN": 0.1, "VB NN VB": 0.1, "VB VB NN": 0.1, "VB VB VB": 0.05}
+        self._transmTri = {"NN NN NN": 0.05, "NN NN VB": 0.3, "NN VB NN": 0.3, "NN VB VB": 0.05,
+            "VB NN NN": 0.1, "VB NN VB": 0.1, "VB VB NN": 0.05, "VB VB VB": 0.05}
         self._wordSeq = ["the", "cat", "is", "pretty"]
 
     def test_bigram_viterbi(self):
@@ -37,6 +37,18 @@ class VeterbiMathTest(unittest.TestCase):
             {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}] 
         actual_table = dt.probs
         self.assertListEqual(expected_table, actual_table, "do_trigram() probability computation test")
+
+    def test_predict_bigram(self):
+        viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
+        expected_tag_seq = ['VB', 'NN', 'VB', 'NN']
+        actual_tag_seq = viterbi.predict(self._wordSeq, 2)
+        self.assertListEqual(expected_tag_seq, actual_tag_seq, "predict tag seq using bigram model") 
+        
+    def test_predict_trigram(self):
+        viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
+        expected_tag_seq = ['NN', 'VB', 'VB', 'NN'] 
+        actual_tag_seq = viterbi.predict(self._wordSeq, 3)
+        self.assertListEqual(expected_tag_seq, actual_tag_seq, "predict tag seq using trigram model") 
 
 if __name__ == "__main__":
     unittest.main()

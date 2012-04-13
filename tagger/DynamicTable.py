@@ -41,7 +41,7 @@ class DynamicTable:
             n:  column index to be queried
         """
         path = [n]
-        while m >= 0:
+        while m > 0:
             n = self.lasts[m][n]
             path += [n]
             m -= 1

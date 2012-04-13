@@ -40,9 +40,9 @@ class ViterbiMath:
             dynamic_table.update(next_col)
         
         last_c = seq_size - 1
-        last_col = [row[last_c] for row in dynamic_table.probs]
-        end_r = last_col.index(max(last_col))
-        return dynamic_table.fullpath(end_r, last_c)
+        last_col = dynamic_table.probs[last_c]
+        last_best_tag = max(last_col, key=last_col.get)
+        return dynamic_table.full_path(last_c, last_best_tag)
 
     def get_next_column(self, dynamic_table, n, c, word):
         """
