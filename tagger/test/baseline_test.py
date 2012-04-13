@@ -2,9 +2,10 @@ import unittest2
 from StringIO import StringIO
 
 import mock
-from mock import MagicMock, patch
+from mock import patch
 
 from .. import baseline
+import testsetup
 
 class BaselineTest(unittest2.TestCase):
     def setUp(self):
@@ -27,7 +28,7 @@ class BaselineTest(unittest2.TestCase):
         MD b
         NNP a"""
 
-        m = mock_open(data=StringIO(lines))
+        m = testsetup.mock_open(data=StringIO(lines))
         open_name = "{0}.open".format(baseline.__name__)
         filename = ""
 
@@ -40,7 +41,7 @@ class BaselineTest(unittest2.TestCase):
         tagged = {"a": "NN", "b": "MD"}
         lines = ["a", "b", "c"]
 
-        m = mock_open()
+        m = testsetup.mock_open()
         open_name = "{0}.open".format(baseline.__name__)
         filename = ""
         default_tag = "NNP"
@@ -55,20 +56,4 @@ class BaselineTest(unittest2.TestCase):
 
         self.assertListEqual(m.mock_calls[2:-1], expected_calls)
 
-
-# Shamelessly copied from Mock website:
-# http://www.voidspace.org.uk/python/mock/examples.html#mocking-open
-def mock_open(mock=None, data=None):
-    file_spec = file
-    if mock is None:
-        mock = MagicMock(spec=file_spec)
-
-    handle = MagicMock(spec=file_spec)
-    handle.write.return_value = None
-    if data is None:
-        handle.__enter__.return_value = handle
-    else:
-        handle.__enter__.return_value = data
-    mock.return_value = handle
-    return mock
 
