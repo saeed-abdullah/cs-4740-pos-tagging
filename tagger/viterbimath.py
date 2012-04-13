@@ -1,6 +1,8 @@
 # Viterbi Algorithm's Math/computation part
 # viterbimath.py
 
+from DynamicTable import DynamicTable
+
 """
 Class:  ViterbiMath(observation_table, trans_matrix_bi, trans_matrix_tri, tags)
 
@@ -93,13 +95,11 @@ class ViterbiMath:
             max_tuple = (max_prob, max_tag_prev)
             obs_tag_prob = self.obsT[word + " " + tag_cur]
 
-            r = 0
             for tag_prev in self.tags:
-                prev_prob = dt.prob(r, c_prev)
+                prev_prob = dt.prob(c_prev, tag_prev)
                 trans_prob = self.transmBi[tag_cur + " " + tag_prev]
                 prob = obs_tag_prob * trans_prob * prev_prob
-                max_tuple = max(max_tuple, (prov, tag_prev))
-                r = r + 1
+                max_tuple = max(max_tuple, (prob, tag_prev))
 
             next_column[tag_cur] = max_tuple
                 
@@ -132,14 +132,12 @@ class ViterbiMath:
             obs_tag_prob = self.obsT[word + " " + tag_cur]
 
             for tag_prev1 in self.tags:
-                r = 0
                 for tag_prev2 in self.tags:
-                    prev2_prob = dt.prob(r, c_prev2)
+                    prev2_prob = dt.prob(c_prev2, tag_prev2)
                     trans2_prob = self.transmBi[tag_prev1 + " " + tag_prev2]
                     trans3_prob = self.transmTri[tag_cur + " " + tag_prev2 + " " + tag_prev1]
                     prob = obs_tag_prob * (0.5*trans2_prob + 0.5*trans3_prob) * prev2_prob
                     max_tuple = max(max_tuple, (prob, tag_prev1))
-                    r = r + 1
 
             next_column[tag_cur] = max_tuple
 

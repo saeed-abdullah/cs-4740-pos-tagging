@@ -1,28 +1,8 @@
-#import unittest2
-#from StringIO import StringIO
-
-#import mock
-#from mock import MagicMock, patch
-
-#from .. import viterbimath
 import sys
 sys.path.append("..")
 from viterbimath import ViterbiMath
+from DynamicTable import DynamicTable
 import unittest
-
-class DynamicT:
-    def __init__(self, seq):
-        self.seq = seq
-        self.col = 0
-        self.table = []
-
-    def prob(self, m, n):
-        return self.table[n][m]
-
-    def update(self, col):
-        self.table.append(col)
-        self.col = self.col + 1
-        return self
 
 class VeterbiMathTest(unittest.TestCase):
     def setUp(self):
@@ -32,27 +12,31 @@ class VeterbiMathTest(unittest.TestCase):
         self._transmBi = {"NN VB": 0.4, "NN NN": 0.1, "VB NN": 0.4, "VB VB": 0.1}
         self._transmTri = {"NN NN NN": 0.05, "NN NN VB": 0.2, "NN VB NN": 0.3, "NN VB VB": 0.1,
             "VB NN NN": 0.1, "VB NN VB": 0.1, "VB VB NN": 0.1, "VB VB VB": 0.05}
+        self._wordSeq = ["the", "cat", "is", "pretty"]
 
     def test_bigram_viterbi(self):
-        dt = DynamicT("the cat is pretty")
-        words = dt.seq.split()
+        dt = DynamicTable()
         viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
-        dt.update(viterbi.get_next_column(dt, 2, dt.col, words[dt.col]))
-        dt.update(viterbi.get_next_column(dt, 2, dt.col, words[dt.col]))
-        expected_table = [[0.1, 0.1], [0.027999999999999997, 0.004000000000000001]]
-        actual_table = dt.table
-        self.assertListEqual(expected_table, actual_table, "bigram test")
+        col = 0
+        dt.update(viterbi.get_next_column(dt, 2, col, self._wordSeq[col]))
+        col = col + 1
+        dt.update(viterbi.get_next_column(dt, 2, col, self._wordSeq[col]))
+        expected_table = [{'VB': 0.1, 'NN': 0.1},
+            {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}]
+        actual_table = dt.probs
+        self.assertListEqual(expected_table, actual_table, "do_bigram() probability computation test")
 
     def test_trigram_viterbi(self):
-        dt = DynamicT("the cat is pretty")
-        words = dt.seq.split()
+        dt = DynamicTable()
         viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
-        dt.update(viterbi.get_next_column(dt, 3, dt.col, words[dt.col]))
-        dt.update(viterbi.get_next_column(dt, 3, dt.col, words[dt.col]))
-        print dt.table
-        expected_table = [[0.1, 0.1], [0.027999999999999997, 0.004000000000000001]]
-        actual_table = dt.table
-        self.assertListEqual(expected_table, actual_table, "trigram test")
+        col = 0
+        dt.update(viterbi.get_next_column(dt, 3, col, self._wordSeq[col]))
+        col = col + 1
+        dt.update(viterbi.get_next_column(dt, 3, col, self._wordSeq[col]))
+        expected_table = [{'VB': 0.1, 'NN': 0.1},
+            {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}] 
+        actual_table = dt.probs
+        self.assertListEqual(expected_table, actual_table, "do_trigram() probability computation test")
 
 if __name__ == "__main__":
     unittest.main()
