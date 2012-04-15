@@ -14,6 +14,13 @@ class VeterbiMathTest(unittest.TestCase):
             "VB NN NN": 0.1, "VB NN VB": 0.1, "VB VB NN": 0.05, "VB VB VB": 0.05}
         self._wordSeq = ["the", "cat", "is", "pretty"]
 
+        self._unigramCount = "data/unigram_count.json"
+        self._trigramCount = "data/trigram_count.json"
+        self._bigramCount = "data/bigram_count.json"
+        self._tagWordCount = "data/tag_word_count.json"
+        self._outputFile = "data/output.pos"
+        self._testFile = "data/test.pos"
+
     def test_bigram_viterbi(self):
         dt = DynamicTable()
         viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
@@ -34,7 +41,7 @@ class VeterbiMathTest(unittest.TestCase):
         col = col + 1
         dt.update(viterbi.get_next_column(dt, 3, col, self._wordSeq[col]))
         expected_table = [{'VB': 0.1, 'NN': 0.1},
-            {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}] 
+            {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}]
         actual_table = dt.probs
         self.assertListEqual(expected_table, actual_table, "do_trigram() probability computation test")
 
@@ -49,6 +56,25 @@ class VeterbiMathTest(unittest.TestCase):
         expected_tag_seq = ['NN', 'VB', 'VB', 'NN'] 
         actual_tag_seq = viterbi.predict(self._wordSeq, 3)
         self.assertListEqual(expected_tag_seq, actual_tag_seq, "predict tag seq using trigram model") 
+
+    def test_run_bigram(self):
+        viterbi = ViterbiMath(self._unigramCount, self._bigramCount,
+            self._trigramCount, self._tagWordCount)
+        expected_tag_seq = "<s> <s>\nVB the \nNN cat \nVB is\nNN pretty\n. ." 
+        viterbi.run(self._testFile, self._outputFile, 2)
+        actual_tag_seq = open(self._outputFile, 'r').read()
+        print actual_tag_seq
+        self.assertEquals(expected_tag_seq, actual_tag_seq, "run bigram test")
+
+    def test_run_trigram(self):
+        viterbi = ViterbiMath(self._unigramCount, self._bigramCount,
+            self._trigramCount, self._tagWordCount)
+        expected_tag_seq = "NN the \nVB cat \nVB is\nNN pretty" 
+        viterbi.run(self._testFile, self._outputFile, 3)
+        actual_tag_seq = open(self._outputFile, 'r').read()
+        print actual_tag_seq
+        self.assertEquals(expected_tag_seq, actual_tag_seq, "run trigram test")
+
 
 if __name__ == "__main__":
     unittest.main()
