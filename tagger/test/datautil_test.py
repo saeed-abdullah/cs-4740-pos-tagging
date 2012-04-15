@@ -62,4 +62,18 @@ class DataUtilTest(unittest2.TestCase):
 
         self.assertEqual(expected, actual)
 
+    def test_lemmatize_observation(self):
+        lines = """
+            RB women
+            VBG increasing"""
+
+        m = testsetup.mock_open()
+        expected_calls = [mock.call().write("RB woman"),
+                mock.call().write("\n"), mock.call().write("VBG increasing"),
+                mock.call().write("\n")]
+
+        with mock.patch(self._open_name, m, create=True):
+            datautil.lemmatize_observations(lines.split("\n"), "mockoutput")
+
+        self.assertEqual(expected_calls, m.mock_calls[2: -1])
 
