@@ -9,8 +9,7 @@ def get_tag_word_matrix(filename):
 
     returns
     ----
-    A dictionary where key is a line from file. So, for given POS train data
-    each key is a sequence of tag and word seperated by a space.
+    A dictionary where key is contains word and tag seperated by space.
     """
 
     count_matrix = {}
@@ -20,10 +19,12 @@ def get_tag_word_matrix(filename):
             if not line:
                 continue
 
-            if line not in count_matrix.keys():
-                count_matrix[line] = 1
+            # Reversing the position of word and tag
+            key = " ".join(line.split()[::-1])
+            if key not in count_matrix.keys():
+                count_matrix[key] = 1
             else:
-                count_matrix[line] += 1
+                count_matrix[key] += 1
 
     return count_matrix
 
