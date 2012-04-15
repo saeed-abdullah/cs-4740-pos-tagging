@@ -25,9 +25,9 @@ class DataUtilTest(unittest2.TestCase):
         self._open_name = "{0}.open".format(datautil.__name__)
 
     def test_get_tag_word_matrix(self):
-        expected = {"<s> <s>": 1, "NNP Pierre": 1, "NNP Vinken": 2,
-                ", ,": 1, "CD 61": 1, "RB steadily": 1, "VBG increasing": 1,
-                "NN net": 1, ". .": 1}
+        expected = {"<s> <s>": 1, "Pierre NNP": 1, "Vinken NNP": 2,
+                ", ,": 1, "61 CD": 1, "steadily RB": 1, "increasing VBG": 1,
+                "net NN": 1, ". .": 1}
 
         with mock.patch(self._open_name, self._mock, create=True):
             actual = datautil.get_tag_word_matrix(filename="")
