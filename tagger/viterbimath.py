@@ -2,6 +2,7 @@
 # viterbimath.py
 
 from DynamicTable import DynamicTable
+from probability import SmoothedDistribution
 import json
 
 """
@@ -21,17 +22,17 @@ class ViterbiMath:
         """
         if isinstance(tag_word_count, str):
             with open(tag_word_count) as f:
-                tag_word_dict = json.loads(f)
+                tag_word_dict = json.loads(f.read())
             with open(unigram_count) as f:
-                unigram_dict = json.loads(f)
+                unigram_dict = json.loads(f.read())
             with open(bigram_count) as f:
-                bigram_dict = json.loads(f)
+                bigram_dict = json.loads(f.read())
             with open(trigram_count) as f:
-                trigram_dict = json.loads(f)
+                trigram_dict = json.loads(f.read())
 
-            self.obsT = ProbabilityDistribution(tag_word_dict, unigram_dict)
-            self.transmBi = ProbabilityDistribution(bigram_dict, unigram_dict)
-            self.trigramTri = ProbabilityDistribution(trigram_dict, unigram_dict)
+            self.obsT = SmoothedDistribution(tag_word_dict, unigram_dict)
+            self.transmBi = SmoothedDistribution(bigram_dict, unigram_dict)
+            self.transmTri = SmoothedDistribution(trigram_dict, unigram_dict)
             self.tags = unigram_dict.keys()
         else:
             self.tags = tag_word_count
@@ -52,9 +53,8 @@ class ViterbiMath:
             if word == ".":
                 tag_seq = self.predict(word_seq, n)
                 for (tag,word) in zip(tag_seq, word_seq):
-                    print tag, word
-                    of.write("%s %s\n" % tag, word)
-
+                    oline = tag + " " + word
+                    of.write("%s\n" % oline)
 
         f.close()
         of.close()
@@ -170,12 +170,18 @@ class ViterbiMath:
             obs_tag_prob = self.obsT[word + " " + tag_cur]
 
             for tag_prev1 in self.tags:
+                tag_prev2 = dt.last(c_prev1, tag_prev1)
+                prev2_prob = dt.prob(c_prev2, tag_prev2)
+                trans_prob = self.transmTri[tag_cur + " " + tag_prev2 + " " + tag_prev1]
+                prob = obs_tag_prob * trans_prob * prev2_prob
+                max_tuple = max(max_tuple, (prob, tag_prev1))
+            """
                 for tag_prev2 in self.tags:
                     prev2_prob = dt.prob(c_prev2, tag_prev2)
                     trans_prob = self.transmTri[tag_cur + " " + tag_prev2 + " " + tag_prev1]
                     prob = obs_tag_prob * trans_prob * prev2_prob
                     max_tuple = max(max_tuple, (prob, tag_prev1))
-
+            """
             next_column[tag_cur] = max_tuple
 
         return next_column

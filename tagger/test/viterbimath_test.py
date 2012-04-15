@@ -40,8 +40,7 @@ class VeterbiMathTest(unittest.TestCase):
         dt.update(viterbi.get_next_column(dt, 3, col, self._wordSeq[col]))
         col = col + 1
         dt.update(viterbi.get_next_column(dt, 3, col, self._wordSeq[col]))
-        expected_table = [{'VB': 0.1, 'NN': 0.1},
-            {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}]
+        expected_table = [{'VB': 0.1, 'NN': 0.1}, {'VB': 0.004000000000000001, 'NN': 0.027999999999999997}] 
         actual_table = dt.probs
         self.assertListEqual(expected_table, actual_table, "do_trigram() probability computation test")
 
@@ -53,26 +52,24 @@ class VeterbiMathTest(unittest.TestCase):
         
     def test_predict_trigram(self):
         viterbi = ViterbiMath(self._obsT, self._transmBi, self._transmTri, self._tags)
-        expected_tag_seq = ['NN', 'VB', 'VB', 'NN'] 
+        expected_tag_seq = ['NN', 'VB', 'NN', 'NN'] 
         actual_tag_seq = viterbi.predict(self._wordSeq, 3)
         self.assertListEqual(expected_tag_seq, actual_tag_seq, "predict tag seq using trigram model") 
 
     def test_run_bigram(self):
         viterbi = ViterbiMath(self._unigramCount, self._bigramCount,
             self._trigramCount, self._tagWordCount)
-        expected_tag_seq = "<s> <s>\nVB the \nNN cat \nVB is\nNN pretty\n. ." 
+        expected_tag_seq = "<s> <s>\nDT the\nNN cat\nVBZ is\nRB pretty\n. .\n" 
         viterbi.run(self._testFile, self._outputFile, 2)
         actual_tag_seq = open(self._outputFile, 'r').read()
-        print actual_tag_seq
         self.assertEquals(expected_tag_seq, actual_tag_seq, "run bigram test")
 
     def test_run_trigram(self):
         viterbi = ViterbiMath(self._unigramCount, self._bigramCount,
             self._trigramCount, self._tagWordCount)
-        expected_tag_seq = "NN the \nVB cat \nVB is\nNN pretty" 
+        expected_tag_seq = "FW <s>\nFW the\nFW cat\nFW is\nIN pretty\n. .\n" 
         viterbi.run(self._testFile, self._outputFile, 3)
         actual_tag_seq = open(self._outputFile, 'r').read()
-        print actual_tag_seq
         self.assertEquals(expected_tag_seq, actual_tag_seq, "run trigram test")
 
 
