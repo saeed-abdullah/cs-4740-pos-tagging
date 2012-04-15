@@ -21,3 +21,18 @@ class ProbabilityDistribution(Mapping):
         tag = key.split()[0]
 
         return float(conditioned_count)/self._tag_count[tag]
+
+class SmoothedDistribution(ProbabilityDistribution):
+    def __init__(self, conditioned_count, tag_count):
+        super(SmoothedDistribution, self).__init__(
+                conditioned_count, tag_count)
+
+    def __getitem__(self, key):
+        if key not in self._conditioned_count.keys():
+            r = 0
+        else:
+            r = self._conditioned_count[key]
+
+        tag = key.split()[0]
+        return float(r + 1)/(self._tag_count[tag] + 
+                len(self._tag_count.keys()))

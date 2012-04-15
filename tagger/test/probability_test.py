@@ -26,6 +26,13 @@ class ProbabilityTest(unittest2.TestCase):
         self.assertEqual(prob["NNP Vinken"], 2./3)
         self.assertEqual(prob[". ,"], 0)
 
+    def test_smoother_probability_distribution(self):
+        prob = probability.SmoothedDistribution(self._tag_word,
+                self._unigram_count)
+
+        self.assertEqual(prob["NNP NONEXIST"], 1./11)
+        self.assertEqual(prob["NNP Vinken"], 3./11)
+
 
 
 
