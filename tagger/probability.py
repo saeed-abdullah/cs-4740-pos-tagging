@@ -18,7 +18,7 @@ class ProbabilityDistribution(Mapping):
             return 0.
 
         conditioned_count = self._conditioned_count[key]
-        tag = key.split()[0]
+        tag = key.split()[1]
 
         return float(conditioned_count)/self._tag_count[tag]
 
@@ -33,6 +33,7 @@ class SmoothedDistribution(ProbabilityDistribution):
         else:
             r = self._conditioned_count[key]
 
-        tag = key.split()[0]
+        tag = key.split()[1]
         return float(r + 1)/(self._tag_count[tag] + 
                 len(self._tag_count.keys()))
+
