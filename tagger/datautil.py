@@ -21,12 +21,28 @@ def get_tag_word_matrix(filename):
 
             # Reversing the position of word and tag
             key = " ".join(line.split()[::-1])
-            if key not in count_matrix.keys():
-                count_matrix[key] = 1
-            else:
+            if count_matrix.has_key(key):
                 count_matrix[key] += 1
+            else:
+                count_matrix[key] = 1
 
-    return count_matrix
+    matrix_with_unknown = {}
+    vocab_dict = {}
+    min_count = min(count_matrix.values())
+    for (k,v) in count_matrix.items():
+        if v == min_count:
+            tag = k.split()[1]
+            unk_tag = "UNK " + tag
+            if matrix_with_unknown.has_key(unk_tag):
+                matrix_with_unknown[unk_tag] += v
+            else:
+                matrix_with_unknown[unk_tag] = v
+        else:
+            matrix_with_unknown[k] = v
+            word = k.split()[0]
+            vocab_dict[word] = 1
+
+    return (matrix_with_unknown, vocab_dict)
 
 def get_tag_n_gram(n, filename):
     """Returns a count matrix for N gram.
@@ -61,10 +77,10 @@ def get_tag_n_gram(n, filename):
             # Fill the queue until it gets at least N tags.
             if len(queue) > n - 1:
                 k = " ".join(queue)
-                if k not in count_matrix.keys():
-                    count_matrix[k] = 1
-                else:
+                if count_matrix.has_key(k):
                     count_matrix[k] += 1
+                else:
+                    count_matrix[k] = 1
 
                 # Get rid of last one.
                 queue.pop()
@@ -89,6 +105,7 @@ def create_count_matrix(filename, output_dir):
     import json
 
     word_tag_output = "tag_word_count.json"
+    vocab_output = "vocab_dict.json"
     bigram_matrix_name = "bigram_count.json"
     unigram_matrix_name = "unigram_count.json"
     trigram_matrix_name = "trigram_count.json"
@@ -97,9 +114,11 @@ def create_count_matrix(filename, output_dir):
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
 
-    word_tag_matrix = get_tag_word_matrix(filename)
+    (word_tag_matrix, vocab_dict) = get_tag_word_matrix(filename)
     with open(sub_dir + word_tag_output, "w") as f:
         json.dump(word_tag_matrix, f)
+    with open(sub_dir + vocab_output, "w") as f:
+        json.dump(vocab_dict, f)
 
     unigram_matrix = get_tag_n_gram(n=1, filename=filename)
     with open(sub_dir + unigram_matrix_name, "w") as f:
