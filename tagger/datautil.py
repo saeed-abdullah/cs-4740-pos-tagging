@@ -132,8 +132,42 @@ def create_count_matrix(filename, output_dir):
     with open(sub_dir + trigram_matrix_name, "w") as f:
         json.dump(trigram_matrix, f)
 
+def lemmatize_observation(fin, outputfile):
+    """Lemmatizes the words.
+        
+        It uses wordnet lemmatizer from nltk. It is assumed that
+        there is a local copy of nltk data available. For more details,
+        see: http://nltk.googlecode.com/svn/trunk/doc/howto/data.html
+        
+        param
+        ----
+        fin: File like object which can be iterated for training or test lines.
+        If the file contains more than one words per line (training data),
+        then it will lemmatize the second word.
+        
+        outputfile: Output path.
+        """
+    
+    import nltk
+    lemmatizer = nltk.WordNetLemmatizer()
+    
+    with open(outputfile, "w") as fout:
+        for l in fin:
+            line = l.strip().split()
+            if len(line) == 0:
+                continue
+            
+            if len(line) == 1:
+                # Test data
+                line[0] = lemmatizer.lemmatize(line[0])
+            else:
+                # Training data
+                line[1] = lemmatizer.lemmatize(line[1])
+            
+            fout.write(" ".join(line))
+            fout.write("\n")
 
 if __name__=="__main__":
     import sys
-
+    #lemmatize_observation(sys.argv[1], sys.argv[2])
     create_count_matrix(sys.argv[1], sys.argv[2])
