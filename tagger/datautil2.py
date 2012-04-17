@@ -22,29 +22,49 @@ def get_tag_word_matrix(filename):
             # Reversing the position of word and tag
             key = " ".join(line.split()[::-1])
             if count_matrix.has_key(key):
-                count_matrix[key] += 1
+                count_matrix[key] = count_matrix[key] + 1.
             else:
-                count_matrix[key] = 1
+                count_matrix[key] = 1.
 
+    tags = {}
     matrix_with_unknown = {}
-    vocab_dict = {}
     min_count = min(count_matrix.values())
+    UNK = "UNK"
     for (k,v) in count_matrix.items():
+        word = k.split()[0]
+        tag = k.split()[1]
         if v == min_count:
-            tag = k.split()[1]
-            unk_tag = "UNK " + tag
-            if matrix_with_unknown.has_key(unk_tag):
-                matrix_with_unknown[unk_tag] += v
+            if matrix_with_unknown.has_key(UNK):
+                if matrix_with_unknown[UNK].has_key(tag):
+                    matrix_with_unknown[UNK][tag] += v
+                else:
+                    matrix_with_unknown[UNK][tag] = v
             else:
-                matrix_with_unknown[unk_tag] = v
+                matrix_with_unknown[UNK] = {}
+                matrix_with_unknown[UNK][tag] = v
         else:
-            matrix_with_unknown[k] = v
-            word = k.split()[0]
-            vocab_dict[word] = 1
+            if not matrix_with_unknown.has_key(word):
+                matrix_with_unknown[word] = {}
+            matrix_with_unknown[word][tag] = v
+        if tags.has_key(tag):
+            tags[tag] =  tags[tag] + 1.
+        else:
+            tags[tag] = 1.
 
-    return (matrix_with_unknown, vocab_dict)
+    tag_size = float(len(tags))
+    for (word,tag_dict) in matrix_with_unknown.items():
+        for (tag, v) in tag_dict.items():
+            matrix_with_unknown[word][tag] = (tag_dict[tag] + 1.) / (tags[tag] + tag_size)
 
-def get_tag_n_gram(n, filename):
+    import math
+    for (w,tag_dict) in matrix_with_unknown.items():
+        for (tag, prob) in tag_dict.items():
+            matrix_with_unknown[w][tag] = math.log((matrix_with_unknown[w][tag] + 1.) / (tag_size + tags[tag]))
+        matrix_with_unknown[w]["SMOOTH"] = math.log(1. / tag_size)
+
+    return (matrix_with_unknown, tags)
+
+def get_tag_n_gram(n, filename, tags, bi):
     """Returns a count matrix for N gram.
 
     param
@@ -78,14 +98,42 @@ def get_tag_n_gram(n, filename):
             if len(queue) > n - 1:
                 k = " ".join(queue)
                 if count_matrix.has_key(k):
-                    count_matrix[k] += 1
+                    count_matrix[k] = count_matrix[k] + 1.
                 else:
-                    count_matrix[k] = 1
+                    count_matrix[k] = 1.
 
                 # Get rid of last one.
                 queue.pop()
 
-    return count_matrix
+    import copy
+    counts = copy.deepcopy(count_matrix)
+
+    import math
+    if n==1:
+        tot = sum(count_matrix.values())
+        for (k,v) in count_matrix.items():
+            count_matrix[k] = math.log(count_matrix[k] / tot) 
+    elif n==2:
+        tag_size = float(len(tags))
+        for (k,v) in count_matrix.items():
+            tag = k.split()[1] 
+            count_matrix[k] = math.log((count_matrix[k] + 1.) / (tag_size + tags[tag]))
+        count_matrix["SMOOTH"] = math.log(1. / tag_size)
+    elif n>2:
+        tag_size = float(len(tags))
+        tagtag_size = tag_size
+        for i in xrange(1,n):
+            tagtag_size = tagtag_size * tag_size 
+        for (k,v) in count_matrix.items():
+            tagtag = " ".join(k.split()[1::])
+            if bi.has_key(tagtag):
+                tagval = bi[tagtag]
+            else:
+                tagval = 0.
+            count_matrix[k] = math.log((count_matrix[k] + 1.) / (tagtag_size + tagval))
+        count_matrix["SMOOTH"] = math.log(1. / tagtag_size)
+
+    return (count_matrix, counts)
 
 
 def create_count_matrix(filename, output_dir):
@@ -104,31 +152,31 @@ def create_count_matrix(filename, output_dir):
     import os
     import json
 
-    word_tag_output = "tag_word_count.json"
-    vocab_output = "vocab_dict.json"
-    bigram_matrix_name = "bigram_count.json"
-    unigram_matrix_name = "unigram_count.json"
-    trigram_matrix_name = "trigram_count.json"
+    word_tag_output = "tag_word_count2.json"
+    tags_output = "tags2.json"
+    bigram_matrix_name = "bigram_count2.json"
+    unigram_matrix_name = "unigram_count2.json"
+    trigram_matrix_name = "trigram_count2.json"
 
-    sub_dir = os.path.join(output_dir, "count_matrix/")
+    sub_dir = os.path.join(output_dir, "count_matrix2/")
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
 
-    (word_tag_matrix, vocab_dict) = get_tag_word_matrix(filename)
+    (word_tag_matrix, tags) = get_tag_word_matrix(filename)
     with open(sub_dir + word_tag_output, "w") as f:
         json.dump(word_tag_matrix, f)
-    with open(sub_dir + vocab_output, "w") as f:
-        json.dump(vocab_dict, f)
+    with open(sub_dir + tags_output, "w") as f:
+        json.dump(tags, f)
 
-    unigram_matrix = get_tag_n_gram(n=1, filename=filename)
+    (unigram_matrix, unigrams) = get_tag_n_gram(n=1, filename=filename, tags=None, bi=None)
     with open(sub_dir + unigram_matrix_name, "w") as f:
         json.dump(unigram_matrix, f)
 
-    bigram_matrix = get_tag_n_gram(n=2, filename=filename)
+    (bigram_matrix, bigrams) = get_tag_n_gram(n=2, filename=filename, tags=tags, bi=None)
     with open(sub_dir + bigram_matrix_name, "w") as f:
         json.dump(bigram_matrix, f)
 
-    trigram_matrix = get_tag_n_gram(n=3, filename=filename)
+    (trigram_matrix, trigrams) = get_tag_n_gram(n=3, filename=filename, tags=tags, bi=bigrams)
     with open(sub_dir + trigram_matrix_name, "w") as f:
         json.dump(trigram_matrix, f)
 

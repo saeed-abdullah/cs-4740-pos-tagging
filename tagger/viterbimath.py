@@ -2,8 +2,8 @@
 # viterbimath.py
 
 from DynamicTable import DynamicTable
-from probability import SmoothedDistribution
-from probability import ProbabilityDistribution
+from probability2 import SmoothedDistribution
+#from probability import ProbabilityDistribution
 import json
 import math
 
@@ -31,12 +31,12 @@ class ViterbiMath:
                 bigram_dict = json.loads(f.read())
             with open(trigram_count) as f:
                 trigram_dict = json.loads(f.read())
-            with open(vocab_count) as f:
-                vocab_dict = json.loads(f.read())
+#            with open(vocab_count) as f:
+#                vocab_dict = json.loads(f.read())
             
-            self.obsT = SmoothedDistribution(tag_word_dict, unigram_dict, vocab_dict)
-            self.transmBi = SmoothedDistribution(bigram_dict, unigram_dict, vocab_dict)
-            self.transmTri = SmoothedDistribution(trigram_dict, unigram_dict, vocab_dict)
+            self.obsT = SmoothedDistribution(tag_word_dict, unigram_dict)
+            self.transmBi = SmoothedDistribution(bigram_dict, unigram_dict)
+            self.transmTri = SmoothedDistribution(trigram_dict, unigram_dict)
             self.tags = unigram_dict.keys()
         else:
             self.tags = tag_word_count
@@ -149,7 +149,7 @@ class ViterbiMath:
             for tag_prev in self.tags:
                 prev_prob = dt.prob(c_prev, tag_prev)
                 trans_prob = self.transmBi[tag_cur + " " + tag_prev]
-                prob = obs_tag_prob * trans_prob * prev_prob
+                prob = obs_tag_prob + trans_prob + prev_prob
                 max_tuple = max(max_tuple, (prob, tag_prev))
 
             next_column[tag_cur] = max_tuple
@@ -184,7 +184,7 @@ class ViterbiMath:
                 tag_prev2 = dt.last(c_prev1, tag_prev1)
                 prev2_prob = dt.prob(c_prev2, tag_prev2)
                 trans_prob = self.transmTri[tag_cur + " " + tag_prev2 + " " + tag_prev1]
-                prob = obs_tag_prob * trans_prob * prev2_prob
+                prob = obs_tag_prob + trans_prob + prev2_prob
                 max_tuple = max(max_tuple, (prob, tag_prev1))
             
             next_column[tag_cur] = max_tuple
